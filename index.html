@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Jan i Laia</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <meta name="theme-color" content="#ffffff" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 0; }
+
+    .pwa-shell { width: 100%; max-width: 430px; min-height: 100vh; background: #fff; display: flex; flex-direction: column; position: relative; }
+    @media (min-width: 500px) { body { align-items: center; padding: 24px 0; } .pwa-shell { min-height: 750px; border-radius: 16px; box-shadow: 0 4px 32px rgba(0,0,0,0.08); border: 0.5px solid #e5e5e0; } }
+
+    .header { background: #fff; padding: 16px 16px 0; border-bottom: 0.5px solid #e5e5e0; flex-shrink: 0; }
+    .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .app-title { font-size: 17px; font-weight: 500; color: #1a1a18; }
+    .status-chip { font-size: 10px; padding: 2px 7px; border-radius: 20px; background: #eaf3de; color: #3b6d11; font-weight: 500; margin-left: 6px; }
+    .status-chip.offline { background: #faeeda; color: #854f0b; }
+    .app-subtitle { font-size: 11px; color: #888780; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+    .sync-btn { display: flex; align-items: center; gap: 5px; padding: 5px 10px; border: 0.5px solid #b4b2a9; border-radius: 8px; background: transparent; font-size: 12px; color: #5f5e5a; cursor: pointer; }
+    .sync-btn.syncing i { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: #e6f1fb; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: #185fa5; cursor: pointer; border: 0.5px solid #e5e5e0; overflow: hidden; flex-shrink: 0; }
+    .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    .content { flex: 1; overflow-y: auto; padding: 14px 16px; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .week-strip { display: flex; gap: 5px; margin-bottom: 16px; }
+    .day-chip { flex: 1; padding: 7px 3px; border-radius: 10px; border: 0.5px solid #e5e5e0; background: #f5f5f0; text-align: center; cursor: pointer; transition: all 0.12s; }
+    .day-chip.today { background: #e6f1fb; border-color: #b5d4f4; }
+    .day-chip.selected { background: #378add; border-color: #378add; }
+    .day-chip .dn { font-size: 9px; color: #888780; font-weight: 500; text-transform: uppercase; letter-spacing: 0.03em; }
+    .day-chip.selected .dn, .day-chip.selected .dd { color: #fff; }
+    .day-chip.today .dn { color: #185fa5; }
+    .day-chip .dd { font-size: 15px; font-weight: 500; color: #1a1a18; margin-top: 1px; }
+    .day-chip .dot { width: 4px; height: 4px; border-radius: 50%; background: #378add; margin: 3px auto 0; }
+    .day-chip.selected .dot { background: #fff; }
+
+    .section-label { font-size: 10px; font-weight: 500; color: #888780; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+    .event-list { display: flex; flex-direction: column; gap: 8px; }
+    .event-card { background: #fff; border: 0.5px solid #e5e5e0; border-radius: 12px; padding: 10px 12px; display: flex; align-items: flex-start; gap: 10px; }
+    .event-time-col { min-width: 44px; text-align: right; flex-shrink: 0; }
+    .event-time { font-size: 10px; font-weight: 500; color: #888780; line-height: 1.5; }
+    .event-dot { width: 7px; height: 7px; border-radius: 50%; margin: 3px auto 0; }
+    .event-body { flex: 1; min-width: 0; }
+    .event-title { font-size: 13px; font-weight: 500; color: #1a1a18; }
+    .event-meta { font-size: 11px; color: #888780; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .event-badge { font-size: 10px; padding: 1px 7px; border-radius: 20px; font-weight: 500; margin-top: 5px; display: inline-block; }
+    .badge-school { background: #e6f1fb; color: #185fa5; }
+    .badge-health { background: #eaf3de; color: #3b6d11; }
+    .badge-sport { background: #faeeda; color: #854f0b; }
+    .badge-family { background: #eeedfe; color: #3c3489; }
+    .multiday-badge { font-size: 9px; padding: 1px 6px; border-radius: 20px; background: #faeeda; color: #854f0b; font-weight: 500; margin-left: 5px; vertical-align: middle; }
+    .empty-state { text-align: center; padding: 36px 20px; color: #888780; font-size: 13px; }
+    .notice { display: flex; align-items: center; gap: 7px; padding: 7px 10px; border-radius: 8px; margin-bottom: 12px; font-size: 11px; }
+    .notice.success { background: #eaf3de; color: #3b6d11; }
+    .notice.warning { background: #faeeda; color: #854f0b; }
+
+    .todo-list { display: flex; flex-direction: column; gap: 8px; }
+    .todo-item { background: #fff; border: 0.5px solid #e5e5e0; border-radius: 12px; padding: 10px 12px; display: flex; align-items: flex-start; gap: 10px; transition: opacity 0.2s; }
+    .todo-item.done { opacity: 0.5; }
+    .todo-check { width: 20px; height: 20px; min-width: 20px; border-radius: 50%; border: 1.5px solid #b4b2a9; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-top: 1px; transition: all 0.15s; }
+    .todo-check.checked { background: #639922; border-color: #639922; }
+    .todo-check i { font-size: 11px; color: #fff; }
+    .todo-body { flex: 1; }
+    .todo-title { font-size: 13px; color: #1a1a18; }
+    .todo-item.done .todo-title { text-decoration: line-through; color: #888780; }
+    .todo-footer { display: flex; align-items: center; gap: 7px; margin-top: 5px; flex-wrap: wrap; }
+    .assignee-pill { font-size: 10px; padding: 1px 7px; border-radius: 20px; font-weight: 500; }
+    .pill-arnau { background: #e6f1fb; color: #185fa5; }
+    .pill-patricia { background: #eeedfe; color: #3c3489; }
+    .pill-ambos { background: #eaf3de; color: #3b6d11; }
+    .todo-due { font-size: 10px; color: #888780; display: flex; align-items: center; gap: 3px; }
+
+    .nav-bar { flex-shrink: 0; background: #fff; border-top: 0.5px solid #e5e5e0; display: flex; padding: 8px 12px 16px; gap: 8px; }
+    .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 8px 4px; border-radius: 10px; border: none; background: transparent; cursor: pointer; color: #888780; transition: all 0.15s; }
+    .nav-tab i { font-size: 20px; }
+    .nav-tab span { font-size: 10px; font-weight: 500; }
+    .nav-tab.active { background: #e6f1fb; color: #185fa5; }
+    .nav-add { width: 52px; height: 52px; border-radius: 14px; border: none; background: #378add; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; align-self: center; transition: background 0.15s; }
+    .nav-add:hover { background: #185fa5; }
+    .nav-add i { font-size: 22px; }
+
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .modal-backdrop.open { opacity: 1; pointer-events: all; }
+    .modal { background: #fff; border-radius: 16px 16px 0 0; padding: 20px; width: 100%; max-width: 430px; transform: translateY(40px); transition: transform 0.2s; max-height: 88vh; overflow-y: auto; }
+    .modal-backdrop.open .modal { transform: translateY(0); }
+    .modal-title { font-size: 16px; font-weight: 500; color: #1a1a18; margin-bottom: 16px; }
+    .field { margin-bottom: 12px; }
+    .field label { font-size: 12px; color: #888780; display: block; margin-bottom: 4px; }
+    .field input, .field select { width: 100%; padding: 10px 12px; border: 0.5px solid #b4b2a9; border-radius: 8px; font-size: 14px; background: #f5f5f0; color: #1a1a18; font-family: inherit; }
+    .field input:focus, .field select:focus { outline: none; border-color: #378add; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+    .btn-cancel { flex: 1; padding: 11px; border-radius: 8px; border: 0.5px solid #b4b2a9; background: transparent; font-size: 14px; color: #5f5e5a; cursor: pointer; font-family: inherit; }
+    .btn-save { flex: 2; padding: 11px; border-radius: 8px; border: none; background: #378add; color: #fff; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; }
+    .btn-save:hover { background: #185fa5; }
+    .btn-save.loading i { animation: spin 1s linear infinite; }
+    .btn-google { width: 100%; padding: 12px; border-radius: 8px; border: 0.5px solid #b4b2a9; background: #fff; font-size: 14px; color: #1a1a18; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: inherit; margin-bottom: 8px; }
+    .btn-google:hover { background: #f5f5f0; }
+
+    .assignee-selector { display: flex; gap: 6px; }
+    .assignee-opt { flex: 1; padding: 9px 4px; text-align: center; font-size: 12px; border: 0.5px solid #b4b2a9; border-radius: 8px; cursor: pointer; color: #5f5e5a; background: #f5f5f0; }
+    .assignee-opt.sel-arnau { background: #e6f1fb; border-color: #b5d4f4; color: #185fa5; font-weight: 500; }
+    .assignee-opt.sel-patricia { background: #eeedfe; border-color: #afa9ec; color: #3c3489; font-weight: 500; }
+    .assignee-opt.sel-ambos { background: #eaf3de; border-color: #c0dd97; color: #3b6d11; font-weight: 500; }
+
+    .date-card, .time-card { background: #f5f5f0; border: 0.5px solid #e5e5e0; border-radius: 8px; overflow: hidden; margin-bottom: 12px; }
+    .date-row, .time-row { display: flex; align-items: center; padding: 10px 12px; }
+    .date-row + .date-row, .time-row + .time-row { border-top: 0.5px solid #e5e5e0; }
+    .row-label { font-size: 12px; color: #888780; width: 68px; flex-shrink: 0; }
+    .row-input { flex: 1; border: none; background: transparent; font-size: 14px; font-weight: 500; color: #1a1a18; padding: 0; outline: none; font-family: inherit; }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #f5f5f0; border: 0.5px solid #e5e5e0; border-radius: 8px; margin-bottom: 12px; cursor: pointer; }
+    .toggle-label { font-size: 14px; color: #1a1a18; display: flex; align-items: center; gap: 8px; }
+    .toggle-pill { width: 40px; height: 22px; border-radius: 11px; background: #b4b2a9; position: relative; transition: background 0.2s; flex-shrink: 0; }
+    .toggle-pill.on { background: #378add; }
+    .toggle-thumb { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: white; transition: transform 0.2s; }
+    .toggle-pill.on .toggle-thumb { transform: translateX(18px); }
+    .time-card.hidden { opacity: 0.3; pointer-events: none; }
+
+    .login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 20px; padding: 40px 24px; text-align: center; }
+    .login-icon { font-size: 48px; color: #378add; }
+    .login-title { font-size: 22px; font-weight: 500; color: #1a1a18; }
+    .login-sub { font-size: 13px; color: #888780; line-height: 1.6; max-width: 280px; }
+  </style>
+</head>
+<body>
+<div class="pwa-shell" id="shell">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="app-title">Jan i Laia <span class="status-chip" id="status-chip">connectant</span></div>
+        <div class="app-subtitle" id="sync-time">Iniciant…</div>
+      </div>
+      <div class="header-right">
+        <button class="sync-btn" id="sync-btn" onclick="syncCalendar()">
+          <i class="ti ti-refresh"></i>Sync
+        </button>
+        <div class="user-avatar" id="user-avatar" onclick="handleAvatarClick()" title="Compte">?</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content" id="main-content" style="display:none;">
+    <div class="tab-panel active" id="tab-week">
+      <div class="week-strip" id="week-strip"></div>
+      <div class="notice" id="gcal-notice" style="display:none;"><i class="ti ti-brand-google"></i><span id="gcal-msg"></span></div>
+      <div class="section-label" id="day-label"></div>
+      <div class="event-list" id="event-list"></div>
+    </div>
+    <div class="tab-panel" id="tab-todos">
+      <div class="todo-list" id="todo-list"></div>
+    </div>
+  </div>
+
+  <div class="login-screen" id="login-screen">
+    <i class="ti ti-hearts login-icon"></i>
+    <div class="login-title">Jan i Laia</div>
+    <div class="login-sub">L'app de coordinació familiar. Inicia sessió amb el teu compte Google per continuar.</div>
+    <button class="btn-google" onclick="signInGoogle()">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/><path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/></svg>
+      Inicia sessió amb Google
+    </button>
+  </div>
+
+  <div class="nav-bar" id="nav-bar" style="display:none;">
+    <button class="nav-tab active" id="nav-week" onclick="switchTab('week')">
+      <i class="ti ti-calendar"></i>
+      <span>Setmana</span>
+    </button>
+    <button class="nav-add" onclick="openAddModal()">
+      <i class="ti ti-plus"></i>
+    </button>
+    <button class="nav-tab" id="nav-todos" onclick="switchTab('todos')">
+      <i class="ti ti-check"></i>
+      <span>To-dos <span id="todo-badge"></span></span>
+    </button>
+  </div>
+</div>
+
+<!-- Modals -->
+<div class="modal-backdrop" id="modal-choose">
+  <div class="modal" style="padding-bottom:24px;">
+    <div class="modal-title" style="margin-bottom:12px;">Afegir</div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeModal('choose');openModal('event');" style="flex:1;padding:18px 8px;border-radius:12px;border:0.5px solid #e5e5e0;background:#f5f5f0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;font-family:inherit;">
+        <i class="ti ti-calendar" style="font-size:24px;color:#185fa5;"></i>
+        <span style="font-size:13px;font-weight:500;color:#1a1a18;">Nou event</span>
+        <span style="font-size:11px;color:#888780;">Al calendari</span>
+      </button>
+      <button onclick="closeModal('choose');openModal('todo');" style="flex:1;padding:18px 8px;border-radius:12px;border:0.5px solid #e5e5e0;background:#f5f5f0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;font-family:inherit;">
+        <i class="ti ti-checkbox" style="font-size:24px;color:#3c3489;"></i>
+        <span style="font-size:13px;font-weight:500;color:#1a1a18;">Nova tasca</span>
+        <span style="font-size:11px;color:#888780;">A la llista</span>
+      </button>
+    </div>
+    <button class="btn-cancel" style="width:100%;margin-top:12px;" onclick="closeModal('choose')">Cancel·lar</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-event">
+  <div class="modal">
+    <div class="modal-title">Nou event</div>
+    <div class="field"><label>Títol</label><input type="text" id="ev-title" placeholder="p.ex. Natació Jan" /></div>
+    <div class="field"><label>Dates</label>
+      <div class="date-card">
+        <div class="date-row"><span class="row-label">Inici</span><input class="row-input" type="date" id="ev-date-start" /></div>
+        <div class="date-row"><span class="row-label">Fi</span><input class="row-input" type="date" id="ev-date-end" /></div>
+      </div>
+    </div>
+    <div class="toggle-row" onclick="toggleAllDay()">
+      <span class="toggle-label"><i class="ti ti-sun"></i> Dia complet</span>
+      <div class="toggle-pill" id="allday-pill"><div class="toggle-thumb"></div></div>
+    </div>
+    <div class="time-card" id="time-card">
+      <div class="time-row"><span class="row-label">Hora inici</span><input class="row-input" type="time" id="ev-time-start" value="09:00" /></div>
+      <div class="time-row"><span class="row-label">Hora fi</span><input class="row-input" type="time" id="ev-time-end" value="10:00" /></div>
+    </div>
+    <div class="field"><label>Lloc</label><input type="text" id="ev-location" placeholder="p.ex. Piscina Municipal" /></div>
+    <div class="field"><label>Categoria</label>
+      <select id="ev-cat"><option value="school">Escola</option><option value="health">Salut</option><option value="sport">Esport</option><option value="family">Família</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('event')">Cancel·lar</button>
+      <button class="btn-save" id="ev-save-btn" onclick="saveEvent()"><i class="ti ti-brand-google"></i> Guardar al Calendar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-todo">
+  <div class="modal">
+    <div class="modal-title">Nova tasca</div>
+    <div class="field"><label>Tasca</label><input type="text" id="td-title" placeholder="p.ex. Demanar cita ortodòncia" /></div>
+    <div class="field"><label>Responsable</label>
+      <div class="assignee-selector">
+        <div class="assignee-opt sel-arnau" id="opt-Arnau" onclick="selectAssignee('Arnau')">Arnau</div>
+        <div class="assignee-opt" id="opt-Patricia" onclick="selectAssignee('Patricia')">Patricia</div>
+        <div class="assignee-opt" id="opt-Ambos" onclick="selectAssignee('Ambos')">Ambdós</div>
+      </div>
+    </div>
+    <div class="field"><label>Data límit</label><input type="date" id="td-due" /></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('todo')">Cancel·lar</button>
+      <button class="btn-save" id="td-save-btn" onclick="saveTodo()"><i class="ti ti-check"></i> Afegir tasca</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-profile">
+  <div class="modal" style="padding-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <div id="profile-pic" style="width:48px;height:48px;border-radius:50%;background:#e6f1fb;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:500;color:#185fa5;overflow:hidden;"></div>
+      <div>
+        <div id="profile-name" style="font-size:15px;font-weight:500;color:#1a1a18;"></div>
+        <div id="profile-email" style="font-size:12px;color:#888780;"></div>
+      </div>
+    </div>
+    <button class="btn-cancel" style="width:100%;" onclick="doSignOut()"><i class="ti ti-logout" style="font-size:14px;vertical-align:-1px;margin-right:6px;"></i>Tancar sessió</button>
+    <button class="btn-cancel" style="width:100%;margin-top:8px;" onclick="closeModal('profile')">Tornar</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getDatabase, ref, onValue, push, update } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCCCOi6R4ePBxN2dfcRyfOfgd2UdKKIHuc",
+  authDomain: "coparenting-29a44.firebaseapp.com",
+  databaseURL: "https://coparenting-29a44-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "coparenting-29a44",
+  storageBucket: "coparenting-29a44.firebasestorage.app",
+  messagingSenderId: "1064049600875",
+  appId: "1:1064049600875:web:ed1e9f45bad4f2a6eb442e"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getDatabase(fbApp);
+
+const today = new Date();
+const DAYS = ['dg','dl','dm','dc','dj','dv','ds'];
+const MONTHS = ['gen','feb','mar','abr','mai','jun','jul','ago','set','oct','nov','des'];
+let selectedDay = today.getDay(), calendarEvents = [], gcalLoaded = false;
+let selectedAssignee = 'Arnau', allDay = false, currentUser = null;
+
+function fmtDate(d){ if(!d) return ''; const dt=new Date(d+'T00:00:00'); return `${dt.getDate()} ${MONTHS[dt.getMonth()]}`; }
+function fmtDue(d){ if(!d||d==='per definir') return d; const dt=new Date(d+'T00:00:00'); return `${DAYS[dt.getDay()]} ${dt.getDate()} ${MONTHS[dt.getMonth()]}`; }
+
+window.toggleAllDay = ()=>{ allDay=!allDay; document.getElementById('allday-pill').classList.toggle('on',allDay); document.getElementById('time-card').classList.toggle('hidden',allDay); };
+
+function buildWeekStrip(){
+  const strip=document.getElementById('week-strip'); strip.innerHTML='';
+  const start=new Date(today); start.setDate(today.getDate()+(today.getDay()===0?-6:1-today.getDay()));
+  for(let i=0;i<7;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i);
+    const idx=d.getDay(); const isToday=d.toDateString()===today.toDateString();
+    const evs=gcalLoaded?calendarEvents.filter(e=>e.dayIdx===idx):[];
+    const chip=document.createElement('div');
+    chip.className='day-chip'+(isToday?' today':'')+(idx===selectedDay?' selected':'');
+    chip.innerHTML=`<div class="dn">${DAYS[idx]}</div><div class="dd">${d.getDate()}</div>${evs.length?'<div class="dot"></div>':'<div style="height:7px"></div>'}`;
+    chip.onclick=()=>{ selectedDay=idx; buildWeekStrip(); renderEvents(); };
+    strip.appendChild(chip);
+  }
+}
+
+function renderEvents(){
+  const evs=gcalLoaded?calendarEvents.filter(e=>e.dayIdx===selectedDay):[];
+  const start=new Date(today); start.setDate(today.getDate()+(today.getDay()===0?-6:1-today.getDay()));
+  const dayDate=new Date(start); dayDate.setDate(start.getDate()+(selectedDay===0?6:selectedDay-1));
+  document.getElementById('day-label').textContent=`${DAYS[selectedDay]} ${dayDate.getDate()} ${MONTHS[dayDate.getMonth()]}`;
+  const list=document.getElementById('event-list');
+  if(!evs.length){ list.innerHTML='<div class="empty-state"><i class="ti ti-calendar-off" style="font-size:26px;display:block;margin-bottom:8px;"></i>Sense esdeveniments</div>'; return; }
+  const cc={school:'badge-school',health:'badge-health',sport:'badge-sport',family:'badge-family'};
+  const cl={school:'Escola',health:'Salut',sport:'Esport',family:'Família'};
+  const dc={school:'#378ADD',health:'#639922',sport:'#BA7517',family:'#7F77DD'};
+  list.innerHTML=evs.map(ev=>{
+    const multi=ev.dateStart&&ev.dateEnd&&ev.dateStart!==ev.dateEnd;
+    const timeDisplay=ev.allDay?'Tot el dia':(ev.time+(ev.timeEnd?'<br>'+ev.timeEnd:''));
+    const multiTag=multi?`<span class="multiday-badge">${fmtDate(ev.dateStart)}–${fmtDate(ev.dateEnd)}</span>`:'';
+    return `<div class="event-card"><div class="event-time-col"><div class="event-time">${timeDisplay}</div><div class="event-dot" style="background:${dc[ev.cat]||'#888'};"></div></div><div class="event-body"><div class="event-title">${ev.title}${multiTag}</div><div class="event-meta">${ev.location||''}</div><span class="event-badge ${cc[ev.cat]||''}">${cl[ev.cat]||''}</span></div></div>`;
+  }).join('');
+}
+
+function renderTodos(todosObj){
+  const list=document.getElementById('todo-list');
+  if(!todosObj){ list.innerHTML='<div class="empty-state"><i class="ti ti-clipboard-off" style="font-size:26px;display:block;margin-bottom:8px;"></i>Cap tasca encara<br><span style="font-size:11px;margin-top:4px;display:block;">Afegeix la primera tasca amb el botó +</span></div>'; document.getElementById('todo-badge').textContent=''; return; }
+  const todos=Object.entries(todosObj).map(([id,t])=>({id,...t})).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+  const pending=todos.filter(t=>!t.done).length;
+  document.getElementById('todo-badge').textContent=pending>0?`(${pending})`:'';
+  list.innerHTML=todos.map(t=>`
+    <div class="todo-item ${t.done?'done':''}">
+      <button class="todo-check ${t.done?'checked':''}" onclick="window.toggleTodo('${t.id}',${!t.done})">
+        ${t.done?'<i class="ti ti-check"></i>':''}
+      </button>
+      <div class="todo-body">
+        <div class="todo-title">${t.title}</div>
+        <div class="todo-footer">
+          <span class="assignee-pill pill-${(t.assignee||'Arnau').toLowerCase()}">${t.assignee||'Arnau'}</span>
+          ${t.due&&t.due!=='per definir'?`<div class="todo-due"><i class="ti ti-clock" style="font-size:10px;"></i>${fmtDue(t.due)}</div>`:''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+window.toggleTodo = (id, done)=>{ update(ref(db,`todos/${id}`),{done}); };
+
+window.switchTab = (tab)=>{
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('nav-week').classList.toggle('active',tab==='week');
+  document.getElementById('nav-todos').classList.toggle('active',tab==='todos');
+};
+
+window.openAddModal = ()=>document.getElementById('modal-choose').classList.add('open');
+window.closeModal = (t)=>document.getElementById('modal-'+t).classList.remove('open');
+
+window.selectAssignee = (a)=>{
+  selectedAssignee=a;
+  ['Arnau','Patricia','Ambos'].forEach(x=>{ document.getElementById('opt-'+x).className='assignee-opt'+(selectedAssignee===x?' sel-'+x.toLowerCase():''); });
+};
+
+window.openModal = (type)=>{
+  if(type==='event'){
+    const d=today.toISOString().split('T')[0];
+    ['ev-date-start','ev-date-end'].forEach(id=>document.getElementById(id).value=d);
+    document.getElementById('ev-time-start').value='09:00';
+    document.getElementById('ev-time-end').value='10:00';
+    document.getElementById('ev-title').value='';
+    document.getElementById('ev-location').value='';
+    allDay=false; document.getElementById('allday-pill').classList.remove('on'); document.getElementById('time-card').classList.remove('hidden');
+  }
+  if(type==='todo'){ selectedAssignee='Arnau'; window.selectAssignee('Arnau'); document.getElementById('td-title').value=''; document.getElementById('td-due').value=''; }
+  document.getElementById('modal-'+type).classList.add('open');
+};
+
+window.saveTodo = async ()=>{
+  const title=document.getElementById('td-title').value.trim(); if(!title) return;
+  const due=document.getElementById('td-due').value||'per definir';
+  const btn=document.getElementById('td-save-btn');
+  btn.innerHTML='<i class="ti ti-loader" style="animation:spin 1s linear infinite;"></i> Guardant...';
+  try{ await push(ref(db,'todos'),{title,assignee:selectedAssignee,due,done:false,createdAt:Date.now(),createdBy:currentUser?.displayName||''}); window.closeModal('todo'); window.switchTab('todos'); }
+  catch(e){ console.error(e); }
+  finally{ btn.innerHTML='<i class="ti ti-check"></i> Afegir tasca'; }
+};
+
+window.saveEvent = async ()=>{
+  const title=document.getElementById('ev-title').value.trim();
+  const dateStart=document.getElementById('ev-date-start').value;
+  const dateEnd=document.getElementById('ev-date-end').value||dateStart;
+  const ts=document.getElementById('ev-time-start').value;
+  const te=document.getElementById('ev-time-end').value;
+  const location=document.getElementById('ev-location').value.trim();
+  const cat=document.getElementById('ev-cat').value;
+  if(!title||!dateStart) return;
+  const btn=document.getElementById('ev-save-btn');
+  btn.classList.add('loading'); btn.innerHTML='<i class="ti ti-loader"></i> Guardant...';
+  try{
+    const prompt=allDay
+      ?`Crea un event de dia complet al calendari "Jan i Laia":\n- Títol: ${title}\n- Inici: ${dateStart}\n- Fi: ${dateEnd}\n- Lloc: ${location||'(sense lloc)'}\n- Descripció: ${cat}\n\nRetorna JSON {success,message}.`
+      :`Crea un event al calendari "Jan i Laia":\n- Títol: ${title}\n- Inici: ${dateStart}T${ts}:00\n- Fi: ${dateEnd}T${te}:00\n- Lloc: ${location||'(sense lloc)'}\n- Descripció: ${cat}\n\nRetorna JSON {success,message}.`;
+    const response=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:"Crea events al calendari 'Jan i Laia'. Retorna NOMÉS JSON: {success:true|false,message:string}.",mcp_servers:[{type:"url",url:"https://calendarmcp.googleapis.com/mcp/v1",name:"google-calendar"}],messages:[{role:"user",content:prompt}]})});
+    const data=await response.json();
+    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    const match=text.replace(/```json|```/g,'').match(/\{[\s\S]*\}/);
+    const result=match?JSON.parse(match[0]):{success:false};
+    if(result.success){
+      const d=new Date(dateStart+'T00:00:00'); const dayIdx=d.getDay();
+      if(!gcalLoaded){gcalLoaded=true;calendarEvents=[];}
+      calendarEvents.push({title,time:allDay?'Tot el dia':ts,timeEnd:allDay?null:te,allDay,cat,location,dayIdx,dateStart,dateEnd});
+      if(dayIdx===selectedDay) renderEvents(); buildWeekStrip(); window.closeModal('event');
+      showNotice('success',`"${title}" guardat al calendari`);
+    } else showNotice('warning','No s\'ha pogut guardar al Calendar.');
+  } catch(e){ showNotice('warning','Error de connexió amb Google Calendar.'); }
+  finally{ btn.classList.remove('loading'); btn.innerHTML='<i class="ti ti-brand-google"></i> Guardar al Calendar'; }
+};
+
+function showNotice(type,msg){
+  const n=document.getElementById('gcal-notice'); n.className='notice '+type; n.style.display='flex';
+  document.getElementById('gcal-msg').textContent=msg;
+  setTimeout(()=>{ n.style.display='none'; },4000);
+}
+
+window.syncCalendar = async ()=>{
+  const btn=document.getElementById('sync-btn'); btn.classList.add('syncing');
+  document.getElementById('sync-time').textContent='Sincronitzant...';
+  try{
+    const response=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:"Retorna NOMÉS un JSON array dels events d'aquesta setmana del calendari 'Jan i Laia'. Cada objecte: {title,time,timeEnd,cat,location,dayIdx,allDay,dateStart,dateEnd}. Sense markdown.",mcp_servers:[{type:"url",url:"https://calendarmcp.googleapis.com/mcp/v1",name:"google-calendar"}],messages:[{role:"user",content:"Events d'aquesta setmana del calendari 'Jan i Laia' en JSON."}]})});
+    const data=await response.json();
+    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    const match=text.replace(/```json|```/g,'').match(/\[[\s\S]*\]/);
+    if(match){ calendarEvents=JSON.parse(match[0]); gcalLoaded=true; renderEvents(); buildWeekStrip(); document.getElementById('sync-time').textContent='Sincronitzat ara'; }
+    else throw new Error();
+  } catch(e){ document.getElementById('sync-time').textContent='Sync fallit'; }
+  finally{ btn.classList.remove('syncing'); }
+};
+
+window.signInGoogle = async ()=>{
+  const provider=new GoogleAuthProvider();
+  try{ await signInWithPopup(auth,provider); }
+  catch(e){ console.error(e); }
+};
+
+window.handleAvatarClick = ()=>{
+  if(currentUser){
+    document.getElementById('profile-pic').innerHTML=currentUser.photoURL?`<img src="${currentUser.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`:(currentUser.displayName||'U')[0];
+    document.getElementById('profile-name').textContent=currentUser.displayName||'Usuari';
+    document.getElementById('profile-email').textContent=currentUser.email||'';
+    document.getElementById('modal-profile').classList.add('open');
+  } else { window.signInGoogle(); }
+};
+
+window.doSignOut = async ()=>{ await signOut(auth); window.closeModal('profile'); };
+
+onAuthStateChanged(auth,(user)=>{
+  currentUser=user;
+  const chip=document.getElementById('status-chip');
+  const av=document.getElementById('user-avatar');
+  if(user){
+    chip.textContent='Firebase ✓'; chip.className='status-chip';
+    if(user.photoURL){ av.innerHTML=`<img src="${user.photoURL}" alt="${user.displayName}">`; } else { av.textContent=(user.displayName||'U')[0]; }
+    document.getElementById('sync-time').textContent=user.displayName||user.email;
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('main-content').style.display='block';
+    document.getElementById('nav-bar').style.display='flex';
+    onValue(ref(db,'todos'),(snap)=>{ renderTodos(snap.val()); });
+    buildWeekStrip(); renderEvents(); window.syncCalendar();
+  } else {
+    chip.textContent='sense sessió'; chip.className='status-chip offline';
+    av.textContent='?';
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('main-content').style.display='none';
+    document.getElementById('nav-bar').style.display='none';
+  }
+});
+
+document.getElementById('ev-date-start').addEventListener('change',function(){ const e=document.getElementById('ev-date-end'); if(!e.value||e.value<this.value) e.value=this.value; });
+document.getElementById('ev-time-start').addEventListener('change',function(){ const e=document.getElementById('ev-time-end'); if(e.value<=this.value){ const[h,m]=this.value.split(':').map(Number); e.value=`${String(Math.min(h+1,23)).padStart(2,'0')}:${String(m).padStart(2,'0')}`; } });
+document.querySelectorAll('.modal-backdrop').forEach(b=>b.addEventListener('click',e=>{ if(e.target===b){ const id=b.id.replace('modal-',''); window.closeModal(id); } }));
+</script>
+</body>
+</html>
